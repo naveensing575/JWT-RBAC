@@ -1,20 +1,24 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// Define User interface
 export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "moderator";
+  refreshToken?: string; // Store refresh token in DB
 }
 
-// User Schema
 const UserSchema = new Schema<IUser>(
   {
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["user", "admin"], default: "user" },
+    role: {
+      type: String,
+      enum: ["user", "admin", "moderator"],
+      default: "user",
+    },
+    refreshToken: { type: String }, // New field to store refresh token
   },
   { timestamps: true }
 );
