@@ -5,16 +5,16 @@ import User, { IUser } from "../models/User";
 
 const generateAccessToken = (user: IUser) => {
   return jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user._id, role: user.role, tokenVersion: user.tokenVersion }, // Include tokenVersion
     process.env.JWT_SECRET as string,
-    { expiresIn: "1h" } // Expires in 1 hour
+    { expiresIn: "1h" }
   );
 };
 const generateRefreshToken = (user: IUser) => {
   return jwt.sign(
-    { id: user._id },
+    { id: user._id, tokenVersion: user.tokenVersion }, // Include tokenVersion
     process.env.REFRESH_TOKEN_SECRET as string,
-    { expiresIn: "7d" } // Expires in 7 days
+    { expiresIn: "7d" } // Refresh token expires in 7 days
   );
 };
 
@@ -28,9 +28,15 @@ export const registerUser = async (
   if (existingUser) throw new Error("Email already in use");
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = new User({ username, email, password: hashedPassword, role });
-  await newUser.save();
+  const newUser = new User({
+    username,
+    email,
+    password: hashedPassword,
+    role,
+    tokenVersion: 0,
+  });
 
+  await newUser.save();
   return { message: "User registered successfully" };
 };
 
@@ -48,7 +54,7 @@ export const loginUser = async (
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  // Save refresh token in database
+  // Save refresh token in DB
   user.refreshToken = refreshToken;
   await user.save();
 
@@ -68,22 +74,21 @@ export const loginUser = async (
 
 export const refreshAccessToken = async (req: any, res: Response) => {
   try {
-    const refreshToken = req.cookies.refreshToken; // Get token from cookies
+    const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) throw new Error("No refresh token provided");
 
-    const user = await User.findOne({ refreshToken });
-    if (!user) throw new Error("Invalid refresh token");
-
-    jwt.verify(
+    const decoded: any = jwt.verify(
       refreshToken,
-      process.env.REFRESH_TOKEN_SECRET as string,
-      (err: any, decoded: any) => {
-        if (err) throw new Error("Invalid refresh token");
-
-        const newAccessToken = generateAccessToken(user);
-        res.status(200).json({ accessToken: newAccessToken });
-      }
+      process.env.REFRESH_TOKEN_SECRET as string
     );
+
+    const user = await User.findById(decoded.id);
+    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+      throw new Error("Invalid refresh token");
+    }
+
+    const newAccessToken = generateAccessToken(user);
+    res.status(200).json({ accessToken: newAccessToken });
   } catch (error) {
     res.status(403).json({ message: (error as Error).message });
   }
@@ -91,12 +96,17 @@ export const refreshAccessToken = async (req: any, res: Response) => {
 
 export const logoutUser = async (req: any, res: Response) => {
   try {
-    const user = await User.findOneAndUpdate(
-      { refreshToken: req.cookies.refreshToken },
-      { refreshToken: "" }
-    );
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken)
+      return res.status(401).json({ message: "No token provided" });
 
+    const user = await User.findOne({ refreshToken });
     if (!user) return res.status(403).json({ message: "Invalid request" });
+
+    // Invalidate refresh token and increment tokenVersion
+    user.refreshToken = "";
+    user.tokenVersion += 1; // This invalidates all previous access tokens
+    await user.save();
 
     // Clear refresh token from cookies
     res.clearCookie("refreshToken", {

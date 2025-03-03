@@ -5,7 +5,8 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: "user" | "admin" | "moderator";
-  refreshToken?: string; // Store refresh token in DB
+  refreshToken?: string;
+  tokenVersion: number;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -18,7 +19,8 @@ const UserSchema = new Schema<IUser>(
       enum: ["user", "admin", "moderator"],
       default: "user",
     },
-    refreshToken: { type: String }, // New field to store refresh token
+    refreshToken: { type: String },
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
