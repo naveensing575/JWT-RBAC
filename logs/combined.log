@@ -33,3 +33,12 @@
 2025-03-03T04:35:34.752Z [[32MINFO[39M]: MongoDB connected successfully
 2025-03-03T05:05:16.967Z [[32MINFO[39M]: 🚀 Server running on port 5000
 2025-03-03T05:05:17.837Z [[32MINFO[39M]: MongoDB connected successfully
+2025-03-03T05:47:47.695Z [[32MINFO[39M]: 🚀 Server running on port 5000
+2025-03-03T05:47:48.873Z [[32MINFO[39M]: MongoDB connected successfully
+2025-03-03T05:48:16.345Z [[32MINFO[39M]: 🚀 Server running on port 5000
+2025-03-03T05:48:17.056Z [[32MINFO[39M]: MongoDB connected successfully
+2025-03-03T05:52:49.722Z [[32MINFO[39M]: 🚀 Server running on port 5000
+2025-03-03T05:52:50.590Z [[32MINFO[39M]: MongoDB connected successfully
+2025-03-03T05:53:49.384Z [[32MINFO[39M]: 🚀 Server running on port 5000
+2025-03-03T05:53:50.101Z [[32MINFO[39M]: MongoDB connected successfully
+2025-03-03T05:55:08.188Z [[31MERROR[39M]: POST /auth/login - Bad control character in string literal in JSON at position 61 (line 3 column 25)
