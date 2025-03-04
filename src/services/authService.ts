@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { Response } from "express";
 import validator from "validator";
 import User, { IUser } from "../models/User";
-
+import { isStrongPassword } from "../utils/passwordRegex";
 /**
  * Generate an Access Token
  */
@@ -31,7 +31,7 @@ const generateRefreshToken = (user: IUser) => {
 };
 
 /**
- * Register a new user
+ * Register a new user with strong password enforcement
  */
 export const registerUser = async (
   username: string,
@@ -39,8 +39,14 @@ export const registerUser = async (
   password: string,
   role: string
 ) => {
-  if (!validator.isEmail(email) || !validator.isLength(password, { min: 8 })) {
-    throw new Error("Invalid email format or password too short");
+  if (!validator.isEmail(email)) {
+    throw new Error("Invalid email format.");
+  }
+
+  if (!isStrongPassword(password)) {
+    throw new Error(
+      "Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character."
+    );
   }
 
   const sanitizedUsername = validator.escape(username.trim());
@@ -70,8 +76,8 @@ export const loginUser = async (
   password: string,
   res: Response
 ) => {
-  if (!validator.isEmail(email) || !validator.isLength(password, { min: 8 })) {
-    throw new Error("Invalid credentials");
+  if (!validator.isEmail(email) || !isStrongPassword(password)) {
+    throw new Error("Invalid credentials.");
   }
 
   const sanitizedEmail = validator.normalizeEmail(email) as string;
